@@ -147,21 +147,29 @@ class DataLayer:
         self.market_gen = MarketDataGenerator()
         self._market_data = None
 
-    def initialize(self, seed_knowledge: bool = True) -> dict:
-        """Initialize data layer: generate market data + seed knowledge."""
+    def initialize(self, seed_knowledge: bool = True,
+                   real_data: bool = False, tickers: list = None,
+                   period: str = '1y') -> dict:
+        """Initialize data layer with synthetic or real market data."""
         logger.info("=" * 60)
         logger.info("LAYER 1: DATA LAYER - Initializing")
         logger.info("=" * 60)
 
-        # Generate synthetic market data
-        self._market_data = self.market_gen.generate()
+        if real_data:
+            from .real_data import RealDataFetcher
+            fetcher = RealDataFetcher()
+            self._market_data = fetcher.fetch(tickers=tickers, period=period)
+            logger.info("  Source: Yahoo Finance (real market data)")
+        else:
+            self._market_data = self.market_gen.generate()
+            logger.info("  Source: Synthetic data (embedded patterns)")
+
         prices = self._market_data["prices"]
         logger.info(
             f"  Market data: {prices.shape[1]} stocks, "
             f"{prices.shape[0]} days ({prices.index[0].date()} to {prices.index[-1].date()})"
         )
 
-        # Seed knowledge base
         if seed_knowledge:
             self.knowledge_base.seed_demo_knowledge()
 

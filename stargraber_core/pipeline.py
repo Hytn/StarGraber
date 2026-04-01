@@ -52,26 +52,40 @@ class StarGraberPipeline:
         self.execution_layer = ExecutionLayer()
         self.review_layer = ReviewLayer(self.store, self.data_layer)
 
-    def run(self, use_llm: bool = False, llm_client=None) -> dict:
+    def run(self, use_llm: bool = False, llm_client=None,
+            real_data: bool = False, tickers: list = None,
+            period: str = '1y') -> dict:
         """
         Execute the full pipeline end-to-end.
 
         Args:
             use_llm: If True, uses LLM for idea generation and code generation
             llm_client: LLM client instance (required if use_llm=True)
+            real_data: If True, fetch real market data from Yahoo Finance
+            tickers: Stock tickers for real data mode
+            period: Data period for real data ('1y', '6mo', etc.)
 
         Returns:
             dict with results from each layer
         """
         logger.info("\n" + "=" * 60)
         logger.info("  STARGRABER - AI-Driven Quant Research Pipeline")
-        logger.info("  Running full pipeline cycle")
+        mode_str = []
+        if real_data:
+            mode_str.append("Real Data")
+        if use_llm:
+            mode_str.append("LLM")
+        mode_label = " + ".join(mode_str) if mode_str else "Demo"
+        logger.info(f"  Mode: {mode_label}")
         logger.info("=" * 60 + "\n")
 
         results = {}
 
         # ─── LAYER 1: DATA ───────────────────────────────
-        market_data = self.data_layer.initialize(seed_knowledge=True)
+        market_data = self.data_layer.initialize(
+            seed_knowledge=True, real_data=real_data,
+            tickers=tickers, period=period
+        )
         prices = market_data["prices"]
         volumes = market_data["volumes"]
         knowledge = self.data_layer.get_knowledge()

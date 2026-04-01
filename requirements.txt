@@ -1,2 +1,4 @@
 numpy>=1.24.0
 pandas>=2.0.0
+yfinance>=0.2.0    # optional: for --real-data mode
+httpx>=0.24.0      # optional: for --use-llm mode (falls back to urllib)

@@ -85,9 +85,9 @@ class IdeaGenerator:
 
     def _generate_with_llm(self, knowledge_items, llm_client) -> list:
         """LLM mode: use Claude to generate ideas from knowledge."""
-        prompt = self._build_prompt(knowledge_items)
-        response = llm_client.generate(prompt)
-        return self._parse_llm_response(response)
+        from .llm_client import IdeaGeneratorLLM
+        generator = IdeaGeneratorLLM(llm_client)
+        return generator.generate_ideas(knowledge_items)
 
     def _build_prompt(self, knowledge_items: list) -> str:
         kb_text = "\n\n".join(

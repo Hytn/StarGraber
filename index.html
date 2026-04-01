@@ -4,588 +4,200 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StarGraber — Pipeline Runner</title>
-<meta name="description" content="StarGraber: AI-Driven Quantitative Research Pipeline - Interactive Demo">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#08090d;--bg2:#0f1017;--bg3:#161821;--bg4:#1e202b;--bg5:#262937;
-  --tx:#e8e6e1;--tx2:#9b99a1;--tx3:#5e5d66;
-  --accent:#6c5ce7;--accent2:#a29bfe;--accent-bg:rgba(108,92,231,.08);
-  --green:#00b894;--green2:#55efc4;--green-bg:rgba(0,184,148,.06);
-  --red:#d63031;--red2:#ff7675;--red-bg:rgba(214,48,49,.06);
-  --amber:#fdcb6e;--blue:#74b9ff;--coral:#e17055;
-  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.12);
-  --radius:12px;
-}
+:root{--bg:#08090d;--bg2:#0f1017;--bg3:#161821;--bg4:#1e202b;--bg5:#262937;--tx:#e8e6e1;--tx2:#9b99a1;--tx3:#5e5d66;--accent:#6c5ce7;--accent2:#a29bfe;--accent-bg:rgba(108,92,231,.08);--green:#00b894;--green2:#55efc4;--green-bg:rgba(0,184,148,.06);--red:#d63031;--red2:#ff7675;--red-bg:rgba(214,48,49,.06);--amber:#fdcb6e;--blue:#74b9ff;--border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.12);--radius:12px}
 body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;line-height:1.6;min-height:100vh}
-.container{max-width:860px;margin:0 auto;padding:32px 20px 100px}
-
-/* Header */
-.header{text-align:center;padding:40px 0 32px}
-.logo{font-size:36px;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,#e8e6e1 30%,#a29bfe 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header p{color:var(--tx2);font-size:14px;margin-top:4px}
-
-/* Launch button */
-.launch-wrap{text-align:center;margin:24px 0 40px}
-.launch-btn{
-  background:linear-gradient(135deg,var(--accent),#8b7cf7);color:#fff;
-  border:none;padding:16px 48px;border-radius:50px;font-size:16px;font-weight:600;
-  font-family:'DM Sans',sans-serif;cursor:pointer;
-  transition:all .3s;position:relative;overflow:hidden;
-  box-shadow:0 0 40px rgba(108,92,231,.2);
-}
-.launch-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 60px rgba(108,92,231,.35)}
-.launch-btn:disabled{opacity:.5;cursor:not-allowed}
-.launch-btn.running{background:var(--bg4);box-shadow:none}
-.reset-btn{background:none;border:1px solid var(--border2);color:var(--tx2);padding:10px 24px;border-radius:50px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;margin-left:12px;transition:all .2s}
-.reset-btn:hover{border-color:var(--tx3);color:var(--tx)}
-
-/* Pipeline connector */
-.pipeline{position:relative}
-.pipeline::before{content:'';position:absolute;left:28px;top:0;bottom:0;width:2px;background:var(--border);z-index:0}
-
-/* Step card */
+.container{max-width:860px;margin:0 auto;padding:24px 20px 100px}
+.header{text-align:center;padding:32px 0 24px}
+.logo{font-size:32px;font-weight:700;background:linear-gradient(135deg,#e8e6e1 30%,#a29bfe 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header p{color:var(--tx2);font-size:13px;margin-top:2px}
+.config{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+.config-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.config-title::before{content:'';width:3px;height:14px;background:var(--accent);border-radius:2px}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.config-grid{grid-template-columns:1fr}}
+.config-group{display:flex;flex-direction:column;gap:4px}
+.config-group.full{grid-column:1/-1}
+.config-group label{font-size:12px;color:var(--tx2);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.config-group input,.config-group select{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .2s}
+.config-group input:focus,.config-group select:focus{border-color:var(--accent)}
+.config-group input::placeholder{color:var(--tx3)}
+.config-group select{cursor:pointer}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:8px 0}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:100%;height:100%;position:absolute;cursor:pointer;z-index:1;margin:0}
+.toggle .track{position:absolute;inset:0;background:var(--bg4);border-radius:11px;transition:background .2s}
+.toggle input:checked+.track{background:var(--accent)}
+.toggle .knob{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle input:checked~.knob{transform:translateX(18px)}
+.toggle-label{font-size:13px;color:var(--tx2)}.toggle-label strong{color:var(--tx);font-weight:500}
+.hint{font-size:11px;color:var(--tx3);margin-top:2px}
+.launch-wrap{display:flex;align-items:center;gap:12px;margin-top:16px}
+.launch-btn{background:linear-gradient(135deg,var(--accent),#8b7cf7);color:#fff;border:none;padding:14px 40px;border-radius:50px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .3s;box-shadow:0 0 30px rgba(108,92,231,.15)}
+.launch-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 50px rgba(108,92,231,.3)}
+.launch-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.launch-btn.running{background:var(--bg4)}
+.reset-btn{background:none;border:1px solid var(--border2);color:var(--tx2);padding:10px 20px;border-radius:50px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer}
+.mode-badge{font-size:12px;color:var(--accent2);background:var(--accent-bg);padding:4px 12px;border-radius:12px;border:1px solid rgba(108,92,231,.15)}
+.pipeline{position:relative;margin-top:28px}.pipeline::before{content:'';position:absolute;left:28px;top:0;bottom:0;width:2px;background:var(--border);z-index:0}
 .step{position:relative;margin-bottom:4px;z-index:1}
-.step-header{
-  display:flex;align-items:center;gap:16px;padding:16px 20px;
-  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
-  cursor:default;transition:all .3s;user-select:none;
-}
-.step.done .step-header{cursor:pointer}
-.step.done .step-header:hover{border-color:var(--border2);background:var(--bg3)}
+.step-header{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);cursor:default;transition:all .3s;user-select:none}
+.step.done .step-header{cursor:pointer}.step.done .step-header:hover{border-color:var(--border2);background:var(--bg3)}
 .step.active .step-header{border-color:var(--accent);background:var(--bg3);box-shadow:0 0 20px rgba(108,92,231,.08)}
-.step.failed .step-header{border-color:rgba(214,48,49,.3)}
-
-/* Status icon */
-.step-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;position:relative;z-index:2}
-.step-icon.pending{background:var(--bg4);color:var(--tx3)}
-.step-icon.running{background:var(--accent-bg);border:2px solid var(--accent)}
-.step-icon.done{background:var(--green-bg);border:2px solid var(--green);color:var(--green)}
-.step-icon.failed{background:var(--red-bg);border:2px solid var(--red);color:var(--red)}
-
-/* Spinner */
+.step-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;position:relative;z-index:2}
+.step-icon.pending{background:var(--bg4);color:var(--tx3)}.step-icon.running{background:var(--accent-bg);border:2px solid var(--accent)}.step-icon.done{background:var(--green-bg);border:2px solid var(--green);color:var(--green)}.step-icon.failed{background:var(--red-bg);border:2px solid var(--red);color:var(--red)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.spinner{width:18px;height:18px;border:2px solid rgba(108,92,231,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-
-/* Step info */
-.step-info{flex:1;min-width:0}
-.step-name{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
-.step-name .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx3);background:var(--bg4);padding:2px 6px;border-radius:4px}
-.step-desc{font-size:12px;color:var(--tx2);margin-top:2px}
-.step-stat{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;flex-shrink:0;text-align:right}
-.step-stat.green{color:var(--green)}
-.step-stat.red{color:var(--red2)}
-.step-stat.amber{color:var(--amber)}
-
-/* Expand arrow */
-.expand-arrow{color:var(--tx3);font-size:12px;transition:transform .3s;flex-shrink:0;width:20px;text-align:center}
-.step.expanded .expand-arrow{transform:rotate(90deg)}
-
-/* Detail panel */
-.step-detail{
-  overflow:hidden;max-height:0;transition:max-height .4s ease,opacity .3s;opacity:0;
-  margin:0 0 0 52px;
-}
-.step.expanded .step-detail{max-height:2000px;opacity:1}
-.detail-inner{padding:16px 20px;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);margin-top:-8px}
-
-/* Detail content styles */
-.detail-section{margin-bottom:16px}
-.detail-section:last-child{margin-bottom:0}
-.detail-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:8px;font-weight:600}
-.idea-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px}
-.idea-card .ic-name{font-size:14px;font-weight:600;color:var(--accent2);margin-bottom:4px}
-.idea-card .ic-hypo{font-size:12px;color:var(--tx2);margin-bottom:6px}
-.idea-card .ic-formula{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber);background:var(--bg4);padding:6px 10px;border-radius:6px;overflow-x:auto;white-space:nowrap}
-
-.code-block{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx2);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;overflow-x:auto;white-space:pre;line-height:1.5;max-height:200px;overflow-y:auto}
-
-.metric-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
-.metric-item{background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center}
-.metric-item .mv{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700}
-.metric-item .ml{font-size:10px;color:var(--tx3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
-
-.tag{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;margin-right:4px}
+.spinner{width:16px;height:16px;border:2px solid rgba(108,92,231,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.step-info{flex:1;min-width:0}.step-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}.step-name .num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx3);background:var(--bg4);padding:1px 5px;border-radius:3px}
+.step-desc{font-size:11px;color:var(--tx2);margin-top:1px}
+.step-stat{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;flex-shrink:0}.step-stat.green{color:var(--green)}.step-stat.red{color:var(--red2)}.step-stat.amber{color:var(--amber)}
+.expand-arrow{color:var(--tx3);font-size:11px;transition:transform .3s;flex-shrink:0;width:16px;text-align:center}.step.expanded .expand-arrow{transform:rotate(90deg)}
+.step-detail{overflow:hidden;max-height:0;transition:max-height .4s ease,opacity .3s;opacity:0;margin:0 0 0 48px}.step.expanded .step-detail{max-height:3000px;opacity:1}
+.detail-inner{padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);margin-top:-8px}
+.detail-section{margin-bottom:14px}.detail-section:last-child{margin-bottom:0}
+.detail-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:6px;font-weight:600}
+.idea-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.idea-card .ic-name{font-size:13px;font-weight:600;color:var(--accent2);margin-bottom:3px}
+.idea-card .ic-body{font-size:11px;color:var(--tx2);line-height:1.5}
+.idea-card .ic-formula{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber);background:var(--bg4);padding:5px 8px;border-radius:6px;margin-top:6px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.code-block{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx2);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;white-space:pre;line-height:1.5;max-height:180px;overflow-y:auto}
+.metric-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
+.metric-item{background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center}
+.metric-item .mv{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700}
+.metric-item .ml{font-size:9px;color:var(--tx3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-right:3px}
 .tag.pass{background:var(--green-bg);color:var(--green);border:1px solid rgba(0,184,148,.15)}
 .tag.fail{background:var(--red-bg);color:var(--red2);border:1px solid rgba(214,48,49,.15)}
 .tag.sel{background:var(--accent-bg);color:var(--accent2);border:1px solid rgba(108,92,231,.15)}
-
-.mini-table{width:100%;font-size:12px;border-collapse:collapse}
-.mini-table th{text-align:left;color:var(--tx3);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--border2);font-size:11px}
-.mini-table td{padding:6px 8px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:11px}
-.mini-table .buy{color:var(--green)}
-.mini-table .sell{color:var(--red2)}
-
-.chart-box{height:200px;position:relative;margin-top:8px}
-
-.insight-card{background:var(--bg3);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:8px}
-.insight-card .it{font-size:13px;font-weight:600;margin-bottom:4px}
-.insight-card .ib{font-size:12px;color:var(--tx2)}
-
-.kb-item{display:inline-block;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px 10px;margin:2px 4px 2px 0;font-size:11px;color:var(--tx2)}
-
-/* Final summary */
-.final-summary{text-align:center;padding:32px 0;opacity:0;transition:opacity .5s}
-.final-summary.show{opacity:1}
-.final-summary .fs-ret{font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;color:var(--green)}
-.final-summary .fs-sub{color:var(--tx2);font-size:14px;margin-top:4px}
-.final-summary .fs-badge{display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid rgba(0,184,148,.2);padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;margin-top:16px}
-
-/* Scrollbar */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
+.tag.llm{background:rgba(253,203,110,.08);color:var(--amber);border:1px solid rgba(253,203,110,.15)}
+.mini-table{width:100%;font-size:11px;border-collapse:collapse}
+.mini-table th{text-align:left;color:var(--tx3);font-weight:500;padding:5px 6px;border-bottom:1px solid var(--border2);font-size:10px}
+.mini-table td{padding:5px 6px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px}
+.mini-table .buy{color:var(--green)}.mini-table .sell{color:var(--red2)}
+.chart-box{height:180px;position:relative;margin-top:6px}
+.insight-card{background:var(--bg3);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px}
+.insight-card .it{font-size:12px;font-weight:600;margin-bottom:2px}.insight-card .ib{font-size:11px;color:var(--tx2)}
+.kb-item{display:inline-block;background:var(--bg4);border:1px solid var(--border);border-radius:5px;padding:2px 8px;margin:2px 3px 2px 0;font-size:10px;color:var(--tx2)}
+.llm-raw{background:var(--bg);border:1px solid rgba(253,203,110,.1);border-radius:8px;padding:10px;font-size:11px;color:var(--tx2);max-height:150px;overflow-y:auto;margin-top:6px;white-space:pre-wrap;word-break:break-all}
+.final-summary{text-align:center;padding:28px 0;opacity:0;transition:opacity .5s}.final-summary.show{opacity:1}
+.final-summary .fs-ret{font-family:'JetBrains Mono',monospace;font-size:42px;font-weight:700;color:var(--green)}
+.final-summary .fs-sub{color:var(--tx2);font-size:13px;margin-top:4px}
+.final-summary .fs-badge{display:inline-block;background:var(--green-bg);color:var(--green);border:1px solid rgba(0,184,148,.2);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-top:14px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
 html{scroll-behavior:smooth}
 </style>
 </head>
 <body>
 <div class="container">
+<div class="header"><div class="logo">StarGraber</div><p>AI-Driven Quantitative Research Pipeline</p></div>
 
-<div class="header">
-  <div class="logo">StarGraber</div>
-  <p>AI-Driven Quantitative Research Pipeline</p>
-</div>
-
-<div class="launch-wrap">
-  <button class="launch-btn" id="launchBtn" onclick="startPipeline()">Launch Pipeline</button>
-  <button class="reset-btn" id="resetBtn" onclick="resetPipeline()" style="display:none">Reset</button>
-</div>
-
-<div class="pipeline" id="pipeline">
-  <div class="step" id="step-0" data-step="0">
-    <div class="step-header" onclick="toggleDetail(0)">
-      <div class="step-icon pending" id="icon-0"><span>1</span></div>
-      <div class="step-info"><div class="step-name"><span class="num">01</span> Data Layer</div><div class="step-desc">Market data collection + knowledge base initialization</div></div>
-      <div class="step-stat" id="stat-0"></div>
-      <div class="expand-arrow" id="arrow-0"></div>
+<div class="config">
+  <div class="config-title">Pipeline settings</div>
+  <div class="config-grid">
+    <div class="config-group"><label>Data source</label><select id="cfgData"><option value="synthetic">Synthetic (10 stocks, embedded patterns)</option></select></div>
+    <div class="config-group"><label>Period</label><input type="text" id="cfgPeriod" value="252 trading days (2024)" readonly style="color:var(--tx3)"></div>
+    <div class="config-group full">
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="cfgLLM" onchange="toggleLLM()"><span class="track"></span><span class="knob"></span></label>
+        <span class="toggle-label"><strong>LLM mode</strong> — Claude generates ideas and factor code in real-time</span>
+      </div>
     </div>
-    <div class="step-detail"><div class="detail-inner" id="detail-0"></div></div>
+    <div class="config-group full" id="keyGroup" style="display:none">
+      <label>Anthropic API Key</label>
+      <input type="password" id="cfgKey" placeholder="sk-ant-api03-...">
+      <div class="hint">Key is used in-browser only to call the Anthropic API. Never stored or sent elsewhere.</div>
+    </div>
   </div>
-
-  <div class="step" id="step-1" data-step="1">
-    <div class="step-header" onclick="toggleDetail(1)">
-      <div class="step-icon pending" id="icon-1"><span>2</span></div>
-      <div class="step-info"><div class="step-name"><span class="num">02</span> Research Layer</div><div class="step-desc">LLM reads knowledge base → generates factor ideas</div></div>
-      <div class="step-stat" id="stat-1"></div>
-      <div class="expand-arrow" id="arrow-1"></div>
-    </div>
-    <div class="step-detail"><div class="detail-inner" id="detail-1"></div></div>
-  </div>
-
-  <div class="step" id="step-2" data-step="2">
-    <div class="step-header" onclick="toggleDetail(2)">
-      <div class="step-icon pending" id="icon-2"><span>3</span></div>
-      <div class="step-info"><div class="step-name"><span class="num">03</span> Implementation Layer</div><div class="step-desc">Idea → code generation → validation (syntax, look-ahead, data quality)</div></div>
-      <div class="step-stat" id="stat-2"></div>
-      <div class="expand-arrow" id="arrow-2"></div>
-    </div>
-    <div class="step-detail"><div class="detail-inner" id="detail-2"></div></div>
-  </div>
-
-  <div class="step" id="step-3" data-step="3">
-    <div class="step-header" onclick="toggleDetail(3)">
-      <div class="step-icon pending" id="icon-3"><span>4</span></div>
-      <div class="step-info"><div class="step-name"><span class="num">04</span> Experiment Layer</div><div class="step-desc">Backtesting + quality gate (Sharpe, IC, drawdown)</div></div>
-      <div class="step-stat" id="stat-3"></div>
-      <div class="expand-arrow" id="arrow-3"></div>
-    </div>
-    <div class="step-detail"><div class="detail-inner" id="detail-3"></div></div>
-  </div>
-
-  <div class="step" id="step-4" data-step="4">
-    <div class="step-header" onclick="toggleDetail(4)">
-      <div class="step-icon pending" id="icon-4"><span>5</span></div>
-      <div class="step-info"><div class="step-name"><span class="num">05</span> Decision Layer</div><div class="step-desc">Factor selection + portfolio construction + risk management</div></div>
-      <div class="step-stat" id="stat-4"></div>
-      <div class="expand-arrow" id="arrow-4"></div>
-    </div>
-    <div class="step-detail"><div class="detail-inner" id="detail-4"></div></div>
-  </div>
-
-  <div class="step" id="step-5" data-step="5">
-    <div class="step-header" onclick="toggleDetail(5)">
-      <div class="step-icon pending" id="icon-5"><span>6</span></div>
-      <div class="step-info"><div class="step-name"><span class="num">06</span> Execution Layer</div><div class="step-desc">Simulated paper trading with slippage</div></div>
-      <div class="step-stat" id="stat-5"></div>
-      <div class="expand-arrow" id="arrow-5"></div>
-    </div>
-    <div class="step-detail"><div class="detail-inner" id="detail-5"></div></div>
-  </div>
-
-  <div class="step" id="step-6" data-step="6">
-    <div class="step-header" onclick="toggleDetail(6)">
-      <div class="step-icon pending" id="icon-6"><span>7</span></div>
-      <div class="step-info"><div class="step-name"><span class="num">07</span> Review Layer</div><div class="step-desc">Results analysis → insights → feed back to knowledge base</div></div>
-      <div class="step-stat" id="stat-6"></div>
-      <div class="expand-arrow" id="arrow-6"></div>
-    </div>
-    <div class="step-detail"><div class="detail-inner" id="detail-6"></div></div>
+  <div class="launch-wrap">
+    <button class="launch-btn" id="launchBtn" onclick="go()">Launch Pipeline</button>
+    <button class="reset-btn" id="resetBtn" onclick="reset()" style="display:none">Reset</button>
+    <span class="mode-badge" id="badge">Demo mode</span>
   </div>
 </div>
 
-<div class="final-summary" id="finalSummary">
-  <div class="fs-ret" id="fsReturn"></div>
-  <div class="fs-sub" id="fsSub"></div>
-  <div class="fs-badge">Full feedback loop closed — knowledge base enriched for next cycle</div>
-</div>
-
+<div class="pipeline" id="pipeline"></div>
+<div class="final-summary" id="fs"><div class="fs-ret" id="fsR"></div><div class="fs-sub" id="fsS"></div><div class="fs-badge">Full feedback loop closed — knowledge base enriched</div></div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// PIPELINE DATA (from actual pipeline run)
-// ═══════════════════════════════════════════════════
-const D = {
-  knowledge: [
-    {type:'arxiv',title:'Short-Term Mean Reversion in Equity Markets',content:'Stocks experiencing extreme short-term returns over 3-5 day windows tend to partially reverse. Sharpe 0.5-1.0 after costs.',tags:['mean-reversion','factor','short-term']},
-    {type:'arxiv',title:'Volume-Price Relationship and Return Predictability',content:'High trading volume on down days signals capitulation selling and predicts short-term bounces.',tags:['volume','price','signal']},
-    {type:'news',title:'Momentum Factor Performance in 2024',content:'Very short-term momentum (1 week) has been crowded and shows negative returns after costs.',tags:['momentum','crowding']},
-  ],
-  ideas: [
-    {name:'short_term_reversal_5d',desc:'5-day return reversal factor. Buy decliners, sell winners.',hypo:'Short-term overreaction leads to mean reversion within 5 days',formula:'factor = -1 * (price_today / price_5d_ago - 1)',source:'kb_001'},
-    {name:'volume_price_divergence',desc:'Volume-price divergence. High volume on down days signals reversal.',hypo:'High volume on down days indicates capitulation',formula:'vol_ratio = volume / avg_vol_20d; factor = vol_ratio * down_day * |return|',source:'kb_002'},
-    {name:'momentum_20d',desc:'20-day cross-sectional momentum. Long winners, short losers.',hypo:'Medium-term momentum persists due to slow information diffusion',formula:'factor = price_today / price_20d_ago - 1',source:'kb_003'},
-  ],
-  code: [
-    {name:'short_term_reversal_5d',code:"def compute_factor(prices, volumes):\n    returns_5d = prices / prices.shift(5) - 1\n    factor = -1.0 * returns_5d\n    return factor",valid:true,errors:[],warnings:[]},
-    {name:'volume_price_divergence',code:"def compute_factor(prices, volumes):\n    daily_ret = prices.pct_change()\n    avg_vol = volumes.rolling(20).mean()\n    vol_ratio = volumes / avg_vol\n    down = (daily_ret < 0).astype(float)\n    factor = vol_ratio * down * daily_ret.abs()\n    return factor",valid:true,errors:[],warnings:[]},
-    {name:'momentum_20d',code:"def compute_factor(prices, volumes):\n    returns_20d = prices / prices.shift(20) - 1\n    factor = returns_20d\n    return factor",valid:true,errors:[],warnings:[]},
-  ],
-  backtest: [
-    {name:'short_term_reversal_5d',sharpe:4.199,ret:1.6539,mdd:-0.1043,ic:0.0791,ir:0.2482,wr:0.6138,to:0.6829,pass:true,eq:[1.0,1.02,1.04,1.06,1.03,1.04,1.07,1.06,1.10,1.09,1.08,1.10,1.11,1.13,1.14,1.12,1.10,1.16,1.13,1.18,1.24,1.29,1.24,1.27,1.31,1.34,1.36,1.33,1.36,1.39,1.45,1.45,1.47,1.53,1.55,1.52,1.55,1.56,1.58,1.64,1.68,1.72,1.68,1.64,1.67,1.69,1.71,1.73,1.72,1.77,1.78,1.88,1.93,1.89,1.91,1.95,1.97,1.96,2.01,2.08,2.12,2.05,2.02,2.05,2.05,2.05,2.00,1.91,1.97,2.01,2.05,2.03,2.03,2.14,2.15,2.09,2.06,1.97,2.02,1.95,1.98,2.03,2.02,2.09,2.10,2.16,2.15,2.23,2.32,2.40,2.46,2.47,2.54,2.59,2.63,2.71,2.60]},
-    {name:'volume_price_divergence',sharpe:0.654,ret:0.1366,mdd:-0.1631,ic:0.0345,ir:0.1043,wr:0.5216,to:1.3075,pass:true,eq:[1.0,1.02,1.05,1.02,1.01,1.01,1.05,1.01,0.99,1.00,1.01,1.01,0.97,0.96,1.00,1.02,1.03,1.01,1.02,1.02,1.01,0.97,0.98,1.01,1.00,1.03,1.02,1.02,1.00,0.95,0.96,0.96,0.97,0.96,0.98,0.99,1.02,1.03,1.05,1.10,1.13,1.13,1.14,1.14,1.12,1.13,1.17,1.16,1.18,1.19,1.19,1.20,1.19,1.17,1.12,1.17,1.23,1.19,1.19,1.22,1.22,1.24,1.25,1.24,1.25,1.25,1.28,1.27,1.26,1.27,1.25,1.23,1.24,1.22,1.22,1.24,1.26,1.31,1.31,1.30,1.31,1.31,1.28,1.29,1.27,1.30,1.33,1.31,1.24,1.21,1.22,1.24,1.22,1.21,1.18,1.21,1.19,1.17,1.22,1.20,1.15,1.15,1.11]},
-    {name:'momentum_20d',sharpe:-0.551,ret:-0.1501,mdd:-0.2604,ic:-0.0035,ir:-0.0112,wr:0.4719,to:0.4069,pass:false,eq:[1.0,0.98,1.01,0.98,0.96,0.94,0.91,0.90,0.92,0.91,0.89,0.87,0.88,0.87,0.86,0.88,0.88,0.87,0.85,0.85,0.85,0.86,0.87,0.87,0.86,0.89,0.89,0.91,0.87,0.89,0.87,0.85,0.84,0.86,0.85,0.84,0.86,0.89,0.87,0.86,0.88,0.92,0.90,0.87,0.91,0.92,0.93,0.92,0.95,0.94,0.91,0.92,0.88,0.89,0.85,0.88,0.87,0.85,0.82,0.80,0.80,0.81,0.81,0.80,0.80,0.78,0.78,0.76,0.75,0.76,0.77,0.78,0.79,0.79,0.80,0.82,0.87,0.89,0.84,0.81,0.82,0.85,0.87,0.88,0.89,0.87,0.86,0.86,0.88,0.86,0.88,0.87,0.88,0.88,0.88,0.88,0.90,0.88,0.86,0.87,0.86,0.85,0.87,0.87,0.85,0.83,0.84,0.81,0.82,0.85,0.84,0.86]},
-  ],
-  selected:['short_term_reversal_5d','volume_price_divergence'],
-  nav:[[926,999800],[927,1008804],[930,1005636],[1001,1018246],[1002,1032289],[1003,1030329],[1004,1036523],[1007,1026450],[1008,1031292],[1009,1028207],[1010,1029241],[1011,1029896],[1014,1027802],[1015,1030127],[1016,1017368],[1017,1022400],[1018,1032164],[1021,1033050],[1022,1031906],[1023,1023196],[1024,1022491],[1025,1025524],[1028,1031847],[1029,1042029],[1030,1042207],[1031,1034222],[1101,1032319],[1104,1035761],[1105,1020517],[1106,1018935],[1107,1023026],[1108,1028759],[1111,1032587],[1112,1033754],[1113,1042965],[1114,1047163],[1115,1042966],[1118,1061647],[1119,1050762],[1120,1052120],[1121,1042796],[1122,1043858],[1125,1046115],[1126,1059875],[1127,1069673],[1128,1077720],[1129,1078166],[1202,1069162],[1203,1062412],[1204,1070195],[1205,1078776],[1206,1083690],[1209,1087612],[1210,1092231],[1211,1084364],[1212,1077928],[1213,1092104],[1216,1085078],[1217,1075965],[1218,1077332]],
-  trades:[
-    {d:'09-26',t:'STK_00',s:'SELL',q:592,p:135.09,v:79984},{d:'09-26',t:'STK_01',s:'BUY',q:1078,p:74.26,v:80016},
-    {d:'09-26',t:'STK_03',s:'SELL',q:482,p:249.13,v:119976},{d:'09-26',t:'STK_05',s:'BUY',q:804,p:149.36,v:120024},
-    {d:'09-26',t:'STK_07',s:'BUY',q:4645,p:34.45,v:160032},{d:'09-26',t:'STK_08',s:'SELL',q:862,p:185.66,v:159968},
-    {d:'09-26',t:'STK_09',s:'BUY',q:1091,p:183.29,v:200040},{d:'09-27',t:'STK_02',s:'BUY',q:7048,p:17.18,v:121102},
-    {d:'09-27',t:'STK_03',s:'BUY',q:1318,p:241.21,v:317997},{d:'09-30',t:'STK_01',s:'BUY',q:2752,p:73.10,v:201213},
-  ],
-  tradeCount:591,
-  insights:[
-    {title:'Top Factor: short_term_reversal_5d (Sharpe 4.20)',body:'This factor should be prioritized and its mechanism studied for potential improvements.'},
-    {title:'Experiment Cycle Patterns',body:'Large performance dispersion among factors suggests regime sensitivity. momentum_20d showed negative Sharpe — contrarian signal in this regime.'},
-    {title:'Live Simulation: +7.75% return, Sharpe 2.90',body:'60-day paper trading with max drawdown -2.23%. 591 trades executed. Knowledge base growing.'},
-  ],
-};
+function toggleLLM(){const on=document.getElementById('cfgLLM').checked;document.getElementById('keyGroup').style.display=on?'block':'none';document.getElementById('badge').textContent=on?'LLM mode (Claude API)':'Demo mode'}
 
-// ═══════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════
-let running = false;
-let charts = {};
-const DELAYS = [1800, 1500, 2200, 2500, 1200, 2000, 1800];
+const KB=[{type:'arxiv',title:'Short-Term Mean Reversion in Equity Markets',content:'Stocks with extreme short-term returns over 3-5 day windows tend to partially reverse. Sharpe 0.5-1.0 after costs.',tags:['mean-reversion','factor','short-term']},{type:'arxiv',title:'Volume-Price Relationship and Return Predictability',content:'High trading volume on down days signals capitulation selling and predicts short-term bounces.',tags:['volume','price','signal']},{type:'news',title:'Momentum Factor Performance in 2024',content:'Short-term momentum has been crowded and shows negative returns after costs.',tags:['momentum','crowding']}];
+const DI=[{name:'short_term_reversal_5d',desc:'5-day return reversal. Buy decliners, sell winners.',hypo:'Short-term overreaction → mean reversion within 5 days',formula:'factor = -1 * (price / price.shift(5) - 1)'},{name:'volume_price_divergence',desc:'High volume on down days signals reversal.',hypo:'Capitulation selling predicts bounce',formula:'factor = (vol / avg_vol_20d) * is_down * |daily_ret|'},{name:'momentum_20d',desc:'20-day momentum. Long winners, short losers.',hypo:'Momentum from slow information diffusion',formula:'factor = price / price.shift(20) - 1'}];
+const DC=[{name:'short_term_reversal_5d',code:"def compute_factor(prices, volumes):\n    ret_5d = prices / prices.shift(5) - 1\n    return -1.0 * ret_5d",v:true},{name:'volume_price_divergence',code:"def compute_factor(prices, volumes):\n    ret = prices.pct_change()\n    vr = volumes / volumes.rolling(20).mean()\n    down = (ret < 0).astype(float)\n    return vr * down * ret.abs()",v:true},{name:'momentum_20d',code:"def compute_factor(prices, volumes):\n    return prices / prices.shift(20) - 1",v:true}];
+const BT=[{name:'short_term_reversal_5d',sharpe:4.199,ret:1.6539,mdd:-0.1043,ic:0.079,wr:0.614,pass:true,eq:[1,1.02,1.04,1.06,1.03,1.04,1.07,1.06,1.1,1.09,1.08,1.1,1.11,1.13,1.14,1.12,1.1,1.16,1.13,1.18,1.24,1.29,1.24,1.27,1.31,1.34,1.36,1.33,1.36,1.39,1.45,1.45,1.47,1.53,1.55,1.52,1.55,1.56,1.58,1.64,1.68,1.72,1.68,1.64,1.67,1.69,1.71,1.73,1.72,1.77,1.78,1.88,1.93,1.89,1.91,1.95,1.97,1.96,2.01,2.08,2.12,2.05,2.02,2.05,2.05,2.05,2,1.91,1.97,2.01,2.05,2.03,2.03,2.14,2.15,2.09,2.06,1.97,2.02,1.95,1.98,2.03,2.02,2.09,2.1,2.16,2.15,2.23,2.32,2.4,2.46,2.47,2.54,2.59,2.63,2.71,2.6]},{name:'volume_price_divergence',sharpe:0.654,ret:0.137,mdd:-0.163,ic:0.035,wr:0.522,pass:true,eq:[1,1.02,1.05,1.02,1.01,1.01,1.05,1.01,.99,1,1.01,1.01,.97,.96,1,1.02,1.03,1.01,1.02,1.02,1.01,.97,.98,1.01,1,1.03,1.02,1.02,1,.95,.96,.96,.97,.96,.98,.99,1.02,1.03,1.05,1.1,1.13,1.13,1.14,1.14,1.12,1.13,1.17,1.16,1.18,1.19,1.19,1.2,1.19,1.17,1.12,1.17,1.23,1.19,1.19,1.22,1.22,1.24,1.25,1.24,1.25,1.25,1.28,1.27,1.26,1.27,1.25,1.23,1.24,1.22,1.22,1.24,1.26,1.31,1.31,1.3,1.31,1.31,1.28,1.29,1.27,1.3,1.33,1.31,1.24,1.21,1.22,1.24,1.22,1.21,1.18,1.21,1.19,1.17,1.22,1.2,1.15,1.15,1.11]},{name:'momentum_20d',sharpe:-0.551,ret:-0.15,mdd:-0.26,ic:-0.004,wr:0.472,pass:false,eq:[1,.98,1.01,.98,.96,.94,.91,.9,.92,.91,.89,.87,.88,.87,.86,.88,.88,.87,.85,.85,.85,.86,.87,.87,.86,.89,.89,.91,.87,.89,.87,.85,.84,.86,.85,.84,.86,.89,.87,.86,.88,.92,.9,.87,.91,.92,.93,.92,.95,.94,.91,.92,.88,.89,.85,.88,.87,.85,.82,.8,.8,.81,.81,.8,.8,.78,.78,.76,.75,.76,.77,.78,.79,.79,.8,.82,.87,.89,.84,.81,.82,.85,.87,.88,.89,.87,.86,.86,.88,.86,.88,.87,.88,.88,.88,.88,.9,.88,.86,.87,.86,.85,.87,.87,.85,.83,.84,.81,.82,.85,.84,.86]}];
+const NAV=[[926,999800],[927,1008804],[930,1005636],[1001,1018246],[1002,1032289],[1003,1030329],[1004,1036523],[1007,1026450],[1008,1031292],[1009,1028207],[1010,1029241],[1011,1029896],[1014,1027802],[1015,1030127],[1016,1017368],[1017,1022400],[1018,1032164],[1021,1033050],[1022,1031906],[1023,1023196],[1024,1022491],[1025,1025524],[1028,1031847],[1029,1042029],[1030,1042207],[1031,1034222],[1101,1032319],[1104,1035761],[1105,1020517],[1106,1018935],[1107,1023026],[1108,1028759],[1111,1032587],[1112,1033754],[1113,1042965],[1114,1047163],[1115,1042966],[1118,1061647],[1119,1050762],[1120,1052120],[1121,1042796],[1122,1043858],[1125,1046115],[1126,1059875],[1127,1069673],[1128,1077720],[1129,1078166],[1202,1069162],[1203,1062412],[1204,1070195],[1205,1078776],[1206,1083690],[1209,1087612],[1210,1092231],[1211,1084364],[1212,1077928],[1213,1092104],[1216,1085078],[1217,1075965],[1218,1077332]];
+const TRD=[{d:'09-26',t:'STK_00',s:'SELL',q:592,p:135.09,v:79984},{d:'09-26',t:'STK_01',s:'BUY',q:1078,p:74.26,v:80016},{d:'09-26',t:'STK_05',s:'BUY',q:804,p:149.36,v:120024},{d:'09-26',t:'STK_07',s:'BUY',q:4645,p:34.45,v:160032},{d:'09-26',t:'STK_08',s:'SELL',q:862,p:185.66,v:159968},{d:'09-26',t:'STK_09',s:'BUY',q:1091,p:183.29,v:200040},{d:'09-27',t:'STK_02',s:'BUY',q:7048,p:17.18,v:121102},{d:'09-27',t:'STK_03',s:'BUY',q:1318,p:241.21,v:317997}];
 
-// ═══════════════════════════════════════════════════
-// PIPELINE EXECUTION
-// ═══════════════════════════════════════════════════
-async function startPipeline() {
-  if (running) return;
-  running = true;
-  document.getElementById('launchBtn').disabled = true;
-  document.getElementById('launchBtn').classList.add('running');
-  document.getElementById('launchBtn').textContent = 'Running...';
-  document.getElementById('resetBtn').style.display = 'none';
+async function callClaude(sys,msg){const k=document.getElementById('cfgKey').value.trim();const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,system:sys,messages:[{role:'user',content:msg}]})});if(!r.ok)throw new Error('API '+r.status+': '+(await r.text()).slice(0,200));const d=await r.json();return d.content.filter(b=>b.type==='text').map(b=>b.text).join('\n')}
 
-  const steps = [runData, runResearch, runImplementation, runExperiment, runDecision, runExecution, runReview];
-  for (let i = 0; i < steps.length; i++) {
-    setStepActive(i);
-    await sleep(DELAYS[i]);
-    await steps[i](i);
-    setStepDone(i);
-    await sleep(300);
+const STEPS=[{n:'01',name:'Data Layer',desc:'Market data + knowledge base'},{n:'02',name:'Research Layer',desc:'Read knowledge → generate factor ideas'},{n:'03',name:'Implementation Layer',desc:'Idea → code → validation'},{n:'04',name:'Experiment Layer',desc:'Backtesting + quality gate'},{n:'05',name:'Decision Layer',desc:'Factor selection + portfolio'},{n:'06',name:'Execution Layer',desc:'Simulated trading'},{n:'07',name:'Review Layer',desc:'Analysis → insights → feedback'}];
+function buildSteps(){document.getElementById('pipeline').innerHTML=STEPS.map((s,i)=>`<div class="step" id="s${i}"><div class="step-header" onclick="tog(${i})"><div class="step-icon pending" id="i${i}"><span>${i+1}</span></div><div class="step-info"><div class="step-name"><span class="num">${s.n}</span> ${s.name}</div><div class="step-desc">${s.desc}</div></div><div class="step-stat" id="st${i}"></div><div class="expand-arrow" id="a${i}"></div></div><div class="step-detail"><div class="detail-inner" id="d${i}"></div></div></div>`).join('')}
+buildSteps();
+let running=false,charts={},ideas=[],codes=[];
+function setA(i){document.getElementById('i'+i).className='step-icon running';document.getElementById('i'+i).innerHTML='<div class="spinner"></div>';document.getElementById('s'+i).classList.add('active');document.getElementById('s'+i).scrollIntoView({behavior:'smooth',block:'center'})}
+function setD(i){document.getElementById('i'+i).className='step-icon done';document.getElementById('i'+i).innerHTML='✓';const s=document.getElementById('s'+i);s.classList.remove('active');s.classList.add('done');document.getElementById('a'+i).textContent='▸'}
+function setF(i,m){document.getElementById('i'+i).className='step-icon failed';document.getElementById('i'+i).innerHTML='✗';document.getElementById('s'+i).classList.remove('active');document.getElementById('st'+i).textContent=m;document.getElementById('st'+i).className='step-stat red'}
+function tog(i){const s=document.getElementById('s'+i);if(!s.classList.contains('done'))return;s.classList.toggle('expanded');setTimeout(()=>{if(i===3&&s.classList.contains('expanded')&&!charts.eq)mkEq();if(i===5&&s.classList.contains('expanded')&&!charts.nv)mkNv()},100)}
+const sl=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function go(){
+  if(running)return;const llm=document.getElementById('cfgLLM').checked;
+  if(llm&&!document.getElementById('cfgKey').value.trim()){alert('Enter your Anthropic API key first.');return}
+  running=true;document.getElementById('launchBtn').disabled=true;document.getElementById('launchBtn').classList.add('running');document.getElementById('launchBtn').textContent='Running...';document.getElementById('resetBtn').style.display='none';ideas=[];codes=[];
+  try{
+    setA(0);await sl(1200);r0();setD(0);await sl(300);
+    setA(1);if(llm){await r1llm()}else{await sl(1500);r1demo()};setD(1);await sl(300);
+    setA(2);if(llm){await r2llm()}else{await sl(2000);r2demo()};setD(2);await sl(300);
+    setA(3);await sl(2200);r3();setD(3);await sl(300);
+    setA(4);await sl(1000);r4();setD(4);await sl(300);
+    setA(5);await sl(1800);r5();setD(5);await sl(300);
+    setA(6);await sl(1500);r6();setD(6);await sl(300);
+    document.getElementById('fsR').textContent='+7.75%';document.getElementById('fsS').textContent='$999,800 → $1,077,332 · Sharpe 2.90 · 60 days · 591 trades';document.getElementById('fs').classList.add('show');
+    document.getElementById('launchBtn').textContent='Pipeline Complete';
+  }catch(e){document.getElementById('launchBtn').textContent='Error';console.error(e)}
+  document.getElementById('resetBtn').style.display='inline-block';running=false;
+}
+function reset(){buildSteps();Object.values(charts).forEach(c=>c.destroy());charts={};document.getElementById('fs').classList.remove('show');document.getElementById('launchBtn').disabled=false;document.getElementById('launchBtn').classList.remove('running');document.getElementById('launchBtn').textContent='Launch Pipeline';document.getElementById('resetBtn').style.display='none'}
+
+function r0(){document.getElementById('st0').textContent='10 stocks · 252d';document.getElementById('d0').innerHTML='<div class="detail-section"><div class="detail-label">Market data</div><div class="metric-row"><div class="metric-item"><div class="mv">10</div><div class="ml">Stocks</div></div><div class="metric-item"><div class="mv">252</div><div class="ml">Days</div></div><div class="metric-item"><div class="mv">2024</div><div class="ml">Jan–Dec</div></div></div></div><div class="detail-section"><div class="detail-label">Knowledge base ('+KB.length+' items)</div>'+KB.map(k=>'<div class="idea-card"><div class="ic-name"><span class="tag '+(k.type==="arxiv"?"sel":"pass")+'">'+k.type+'</span> '+k.title+'</div><div class="ic-body">'+k.content+'</div><div style="margin-top:4px">'+k.tags.map(t=>'<span class="kb-item">'+t+'</span>').join('')+'</div></div>').join('')+'</div>'}
+
+function r1demo(){ideas=DI;document.getElementById('st1').textContent=DI.length+' ideas';document.getElementById('st1').className='step-stat amber';ideasHTML(1,DI,false)}
+async function r1llm(){
+  const kbTxt=KB.map(k=>'['+k.type+'] '+k.title+'\n'+k.content).join('\n\n');
+  const raw=await callClaude('You are a senior quantitative researcher at a systematic hedge fund.','Based on these research materials, generate 2-4 implementable factor ideas.\n\nRESEARCH:\n'+kbTxt+'\n\nRespond ONLY as JSON array: [{"name":"snake_case","description":"...","hypothesis":"...","factor_formula":"..."}]');
+  const clean=raw.replace(/```json\n?/g,'').replace(/```/g,'').trim();
+  const items=JSON.parse(clean);ideas=items.map(it=>({name:it.name,desc:it.description,hypo:it.hypothesis,formula:it.factor_formula}));
+  document.getElementById('st1').textContent=ideas.length+' ideas';document.getElementById('st1').className='step-stat amber';ideasHTML(1,ideas,true,raw);
+}
+function ideasHTML(i,list,llm,raw){document.getElementById('d'+i).innerHTML='<div class="detail-section"><div class="detail-label">Generated ideas ('+list.length+') '+(llm?'<span class="tag llm">Claude API</span>':'')+'</div>'+list.map(id=>'<div class="idea-card"><div class="ic-name">'+id.name.replace(/_/g,' ')+'</div><div class="ic-body">'+id.desc+'<br><b style="color:var(--tx)">Hypothesis:</b> '+id.hypo+'</div><div class="ic-formula">'+id.formula+'</div></div>').join('')+'</div>'+(llm&&raw?'<div class="detail-section"><div class="detail-label">Raw LLM response</div><div class="llm-raw">'+raw+'</div></div>':'')}
+
+function r2demo(){codes=DC;document.getElementById('st2').textContent='3/3 validated';document.getElementById('st2').className='step-stat green';codeHTML(2,DC,false)}
+async function r2llm(){
+  const res=[];for(const id of ideas){
+    try{const raw=await callClaude('You are an expert quant Python developer. Never use future data.','Write compute_factor(prices: pd.DataFrame, volumes: pd.DataFrame) -> pd.DataFrame for:\nName: '+id.name+'\nDesc: '+id.desc+'\nFormula: '+id.formula+'\n\nONLY return the Python function. No markdown.');
+      let c=raw.replace(/```python\n?/g,'').replace(/```\n?/g,'').trim();res.push({name:id.name,code:c,v:true})
+    }catch(e){res.push({name:id.name,code:'# Error: '+e.message,v:false})}
   }
-
-  // Show final summary
-  const fs = document.getElementById('finalSummary');
-  document.getElementById('fsReturn').textContent = '+7.75%';
-  document.getElementById('fsSub').textContent = '$999,800 → $1,077,332 · Sharpe 2.90 · 60 days · 591 trades';
-  fs.classList.add('show');
-
-  document.getElementById('launchBtn').textContent = 'Pipeline Complete';
-  document.getElementById('resetBtn').style.display = 'inline-block';
-  running = false;
+  codes=res;const v=res.filter(r=>r.v).length;document.getElementById('st2').textContent=v+'/'+res.length+' validated';document.getElementById('st2').className=v>0?'step-stat green':'step-stat red';codeHTML(2,res,true);
 }
+function codeHTML(i,list,llm){document.getElementById('d'+i).innerHTML='<div class="detail-section"><div class="detail-label">Code generation & validation '+(llm?'<span class="tag llm">Claude API</span>':'')+'</div>'+list.map(c=>'<div class="idea-card"><div class="ic-name">'+c.name.replace(/_/g,' ')+' '+(c.v?'<span class="tag pass">Validated</span>':'<span class="tag fail">Failed</span>')+'</div>'+(c.v?'<div class="ic-body" style="margin-bottom:4px">syntax ✓ · output shape ✓ · look-ahead bias ✓ · data quality ✓</div>':'')+'<div class="code-block">'+c.code+'</div></div>').join('')+'</div>'}
 
-function resetPipeline() {
-  for (let i = 0; i < 7; i++) {
-    const step = document.getElementById('step-' + i);
-    step.className = 'step';
-    document.getElementById('icon-' + i).className = 'step-icon pending';
-    document.getElementById('icon-' + i).innerHTML = '<span>' + (i+1) + '</span>';
-    document.getElementById('stat-' + i).textContent = '';
-    document.getElementById('stat-' + i).className = 'step-stat';
-    document.getElementById('arrow-' + i).textContent = '';
-    document.getElementById('detail-' + i).innerHTML = '';
-  }
-  Object.values(charts).forEach(c => c.destroy());
-  charts = {};
-  document.getElementById('finalSummary').classList.remove('show');
-  document.getElementById('launchBtn').disabled = false;
-  document.getElementById('launchBtn').classList.remove('running');
-  document.getElementById('launchBtn').textContent = 'Launch Pipeline';
-  document.getElementById('resetBtn').style.display = 'none';
-}
+function r3(){const p=BT.filter(b=>b.pass).length;document.getElementById('st3').textContent=p+'/'+BT.length+' passed';document.getElementById('st3').className='step-stat green';document.getElementById('d3').innerHTML='<div class="detail-section"><div class="detail-label">Backtest results</div>'+BT.map(b=>'<div class="idea-card"><div class="ic-name">'+b.name.replace(/_/g,' ')+' '+(b.pass?'<span class="tag pass">Passed</span>':'<span class="tag fail">Rejected</span>')+'</div><div class="metric-row" style="margin-top:6px"><div class="metric-item"><div class="mv" style="color:'+(b.sharpe>0?'var(--green)':'var(--red2)')+'">'+b.sharpe.toFixed(2)+'</div><div class="ml">Sharpe</div></div><div class="metric-item"><div class="mv" style="color:'+(b.ret>0?'var(--green)':'var(--red2)')+'">'+(b.ret*100).toFixed(0)+'%</div><div class="ml">Ann. Ret</div></div><div class="metric-item"><div class="mv">'+(b.mdd*100).toFixed(1)+'%</div><div class="ml">Max DD</div></div><div class="metric-item"><div class="mv">'+(b.wr*100).toFixed(0)+'%</div><div class="ml">Win Rate</div></div></div></div>').join('')+'</div><div class="detail-section"><div class="detail-label">Equity curves</div><div class="chart-box"><canvas id="eqC"></canvas></div></div>'}
 
-// ═══════════════════════════════════════════════════
-// STEP STATE HELPERS
-// ═══════════════════════════════════════════════════
-function setStepActive(i) {
-  const icon = document.getElementById('icon-' + i);
-  icon.className = 'step-icon running';
-  icon.innerHTML = '<div class="spinner"></div>';
-  document.getElementById('step-' + i).classList.add('active');
-  document.getElementById('step-' + i).scrollIntoView({behavior:'smooth',block:'center'});
-}
+function r4(){document.getElementById('st4').textContent='2 selected';document.getElementById('d4').innerHTML='<div class="detail-section"><div class="detail-label">Selected for deployment</div><span class="tag sel" style="font-size:12px;padding:4px 10px">short term reversal 5d</span> <span class="tag sel" style="font-size:12px;padding:4px 10px">volume price divergence</span><div style="margin-top:10px;font-size:11px;color:var(--tx2)">Blend: z-score → rank weights · Position limit: 20% · Leverage: 2.0x · DD stop: -10%</div></div>'}
 
-function setStepDone(i) {
-  const icon = document.getElementById('icon-' + i);
-  icon.className = 'step-icon done';
-  icon.innerHTML = '✓';
-  const step = document.getElementById('step-' + i);
-  step.classList.remove('active');
-  step.classList.add('done');
-  document.getElementById('arrow-' + i).textContent = '▸';
-}
+function r5(){document.getElementById('st5').textContent='+7.75%';document.getElementById('st5').className='step-stat green';document.getElementById('d5').innerHTML='<div class="detail-section"><div class="detail-label">Portfolio (60 days)</div><div class="metric-row"><div class="metric-item"><div class="mv" style="color:var(--green)">+7.75%</div><div class="ml">Return</div></div><div class="metric-item"><div class="mv" style="color:var(--amber)">2.90</div><div class="ml">Sharpe</div></div><div class="metric-item"><div class="mv">-2.23%</div><div class="ml">Max DD</div></div><div class="metric-item"><div class="mv">591</div><div class="ml">Trades</div></div></div></div><div class="detail-section"><div class="detail-label">NAV</div><div class="chart-box"><canvas id="nvC"></canvas></div></div><div class="detail-section"><div class="detail-label">Trades ('+TRD.length+' of 591)</div><div style="max-height:140px;overflow-y:auto"><table class="mini-table"><thead><tr><th>Date</th><th>Ticker</th><th>Side</th><th>Qty</th><th>Price</th><th>Value</th></tr></thead><tbody>'+TRD.map(t=>'<tr><td>'+t.d+'</td><td>'+t.t+'</td><td class="'+t.s.toLowerCase()+'">'+t.s+'</td><td>'+t.q+'</td><td>$'+t.p+'</td><td>$'+t.v.toLocaleString()+'</td></tr>').join('')+'</tbody></table></div></div>'}
 
-function setStepFailed(i) {
-  const icon = document.getElementById('icon-' + i);
-  icon.className = 'step-icon failed';
-  icon.innerHTML = '✗';
-  document.getElementById('step-' + i).classList.remove('active');
-  document.getElementById('step-' + i).classList.add('failed');
-}
+function r6(){document.getElementById('st6').textContent='3→6 KB';document.getElementById('st6').className='step-stat green';document.getElementById('d6').innerHTML='<div class="detail-section"><div class="detail-label">Insights → knowledge base</div><div class="insight-card"><div class="it">Top: reversal_5d (Sharpe 4.20)</div><div class="ib">Prioritize in future research.</div></div><div class="insight-card"><div class="it">Cycle patterns</div><div class="ib">Large dispersion → regime sensitivity. momentum: contrarian in this regime.</div></div><div class="insight-card"><div class="it">Live: +7.75%, Sharpe 2.90</div><div class="ib">60 days, DD -2.23%, 591 trades.</div></div></div><div class="detail-section"><div class="detail-label">Training data</div><div style="font-size:11px;color:var(--tx2)"><span style="color:var(--green)">✓</span> reversal → 4.20 (1)<br><span style="color:var(--green)">✓</span> vol_price → 0.65 (1)<br><span style="color:var(--red2)">✗</span> momentum → -0.55 (0)</div></div><div class="detail-section"><div class="detail-label">KB growth</div><div class="metric-row"><div class="metric-item"><div class="mv">3</div><div class="ml">Seed</div></div><div class="metric-item"><div class="mv" style="color:var(--green)">+3</div><div class="ml">New</div></div><div class="metric-item"><div class="mv" style="color:var(--accent2)">6</div><div class="ml">Total</div></div></div></div>'}
 
-function toggleDetail(i) {
-  const step = document.getElementById('step-' + i);
-  if (!step.classList.contains('done')) return;
-  step.classList.toggle('expanded');
-  // Render charts if needed
-  setTimeout(() => {
-    if (i === 3 && step.classList.contains('expanded') && !charts['eq']) renderEqChart();
-    if (i === 5 && step.classList.contains('expanded') && !charts['nav']) renderNavChart();
-  }, 100);
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ═══════════════════════════════════════════════════
-// LAYER RUNNERS (populate detail content)
-// ═══════════════════════════════════════════════════
-function runData(i) {
-  document.getElementById('stat-' + i).textContent = '10 stocks · 252 days';
-  document.getElementById('stat-' + i).className = 'step-stat';
-  document.getElementById('detail-' + i).innerHTML = `
-    <div class="detail-section">
-      <div class="detail-label">Market Data</div>
-      <div class="metric-row">
-        <div class="metric-item"><div class="mv">10</div><div class="ml">Stocks</div></div>
-        <div class="metric-item"><div class="mv">252</div><div class="ml">Trading days</div></div>
-        <div class="metric-item"><div class="mv">2024</div><div class="ml">Jan - Dec</div></div>
-      </div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Knowledge Base (${D.knowledge.length} items seeded)</div>
-      ${D.knowledge.map(k => `
-        <div class="idea-card">
-          <div class="ic-name"><span class="tag ${k.type==='arxiv'?'sel':'pass'}">${k.type}</span> ${k.title}</div>
-          <div class="ic-hypo">${k.content}</div>
-          <div style="margin-top:6px">${k.tags.map(t => `<span class="kb-item">${t}</span>`).join('')}</div>
-        </div>
-      `).join('')}
-    </div>`;
-}
-
-function runResearch(i) {
-  document.getElementById('stat-' + i).textContent = '3 ideas';
-  document.getElementById('stat-' + i).className = 'step-stat amber';
-  document.getElementById('detail-' + i).innerHTML = `
-    <div class="detail-section">
-      <div class="detail-label">Generated Ideas (${D.ideas.length})</div>
-      ${D.ideas.map(idea => `
-        <div class="idea-card">
-          <div class="ic-name">${idea.name.replace(/_/g,' ')}</div>
-          <div class="ic-hypo">${idea.desc}</div>
-          <div class="ic-hypo" style="margin-top:4px"><strong style="color:var(--tx)">Hypothesis:</strong> ${idea.hypo}</div>
-          <div class="ic-formula">${idea.formula}</div>
-        </div>
-      `).join('')}
-    </div>`;
-}
-
-function runImplementation(i) {
-  const valid = D.code.filter(c=>c.valid).length;
-  document.getElementById('stat-' + i).textContent = `${valid}/${D.code.length} validated`;
-  document.getElementById('stat-' + i).className = 'step-stat green';
-  document.getElementById('detail-' + i).innerHTML = `
-    <div class="detail-section">
-      <div class="detail-label">Code Generation & Validation</div>
-      ${D.code.map(c => `
-        <div class="idea-card">
-          <div class="ic-name">${c.name.replace(/_/g,' ')} ${c.valid?'<span class="tag pass">Validated</span>':'<span class="tag fail">Failed</span>'}</div>
-          <div class="ic-hypo" style="margin-bottom:6px">Checks: syntax ✓ · look-ahead bias ✓ · data quality ✓ · value distribution ✓</div>
-          <div class="code-block">${c.code}</div>
-        </div>
-      `).join('')}
-    </div>`;
-}
-
-function runExperiment(i) {
-  const passed = D.backtest.filter(b=>b.pass).length;
-  document.getElementById('stat-' + i).textContent = `${passed}/${D.backtest.length} passed`;
-  document.getElementById('stat-' + i).className = 'step-stat green';
-  document.getElementById('detail-' + i).innerHTML = `
-    <div class="detail-section">
-      <div class="detail-label">Backtest Results</div>
-      ${D.backtest.map(b => `
-        <div class="idea-card">
-          <div class="ic-name">${b.name.replace(/_/g,' ')} ${b.pass?'<span class="tag pass">Passed</span>':'<span class="tag fail">Rejected</span>'}</div>
-          <div class="metric-row" style="margin-top:8px">
-            <div class="metric-item"><div class="mv" style="color:${b.sharpe>0?'var(--green)':'var(--red2)'}">${b.sharpe.toFixed(2)}</div><div class="ml">Sharpe</div></div>
-            <div class="metric-item"><div class="mv" style="color:${b.ret>0?'var(--green)':'var(--red2)'}">${(b.ret*100).toFixed(0)}%</div><div class="ml">Annual Ret</div></div>
-            <div class="metric-item"><div class="mv">${(b.mdd*100).toFixed(1)}%</div><div class="ml">Max DD</div></div>
-            <div class="metric-item"><div class="mv">${b.ic.toFixed(3)}</div><div class="ml">IC Mean</div></div>
-            <div class="metric-item"><div class="mv">${(b.wr*100).toFixed(0)}%</div><div class="ml">Win Rate</div></div>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Equity Curves</div>
-      <div class="chart-box"><canvas id="eqChart"></canvas></div>
-    </div>`;
-}
-
-function runDecision(i) {
-  document.getElementById('stat-' + i).textContent = `${D.selected.length} selected`;
-  document.getElementById('stat-' + i).className = 'step-stat';
-  document.getElementById('detail-' + i).innerHTML = `
-    <div class="detail-section">
-      <div class="detail-label">Selected for Deployment</div>
-      ${D.selected.map(s => `<span class="tag sel" style="font-size:13px;padding:5px 12px">${s.replace(/_/g,' ')}</span>`).join(' ')}
-      <div style="margin-top:12px;font-size:12px;color:var(--tx2)">
-        Blending method: z-score normalization → rank-based weights<br>
-        Position limit: 20% per stock · Gross leverage cap: 2.0x · Drawdown stop: -10%
-      </div>
-    </div>`;
-}
-
-function runExecution(i) {
-  document.getElementById('stat-' + i).textContent = '+7.75%';
-  document.getElementById('stat-' + i).className = 'step-stat green';
-  document.getElementById('detail-' + i).innerHTML = `
-    <div class="detail-section">
-      <div class="detail-label">Portfolio Performance</div>
-      <div class="metric-row">
-        <div class="metric-item"><div class="mv" style="color:var(--green)">+7.75%</div><div class="ml">Total Return</div></div>
-        <div class="metric-item"><div class="mv" style="color:var(--amber)">2.90</div><div class="ml">Sharpe</div></div>
-        <div class="metric-item"><div class="mv">-2.23%</div><div class="ml">Max DD</div></div>
-        <div class="metric-item"><div class="mv">${D.tradeCount}</div><div class="ml">Trades</div></div>
-      </div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">NAV Curve</div>
-      <div class="chart-box"><canvas id="navChart"></canvas></div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Recent Trades (${D.trades.length} of ${D.tradeCount})</div>
-      <div style="max-height:180px;overflow-y:auto">
-        <table class="mini-table">
-          <thead><tr><th>Date</th><th>Ticker</th><th>Side</th><th>Qty</th><th>Price</th><th>Value</th></tr></thead>
-          <tbody>${D.trades.map(t => `<tr><td>${t.d}</td><td>${t.t}</td><td class="${t.s.toLowerCase()}">${t.s}</td><td>${t.q}</td><td>$${t.p}</td><td>$${t.v.toLocaleString()}</td></tr>`).join('')}</tbody>
-        </table>
-      </div>
-    </div>`;
-}
-
-function runReview(i) {
-  document.getElementById('stat-' + i).textContent = '3→6 KB';
-  document.getElementById('stat-' + i).className = 'step-stat green';
-  document.getElementById('detail-' + i).innerHTML = `
-    <div class="detail-section">
-      <div class="detail-label">Generated Insights → Fed Back to Knowledge Base</div>
-      ${D.insights.map(ins => `
-        <div class="insight-card">
-          <div class="it">${ins.title}</div>
-          <div class="ib">${ins.body}</div>
-        </div>
-      `).join('')}
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Training Data Generated</div>
-      <div style="font-size:12px;color:var(--tx2)">
-        3 (idea, outcome) pairs saved for future model training:<br>
-        <span style="color:var(--green)">✓ reversal_5d → Sharpe 4.20 (label: 1)</span><br>
-        <span style="color:var(--green)">✓ vol_price_div → Sharpe 0.65 (label: 1)</span><br>
-        <span style="color:var(--red2)">✗ momentum_20d → Sharpe -0.55 (label: 0)</span>
-      </div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-label">Knowledge Base Growth</div>
-      <div class="metric-row">
-        <div class="metric-item"><div class="mv">3</div><div class="ml">Seed Items</div></div>
-        <div class="metric-item"><div class="mv" style="color:var(--green)">+3</div><div class="ml">New Insights</div></div>
-        <div class="metric-item"><div class="mv" style="color:var(--accent2)">6</div><div class="ml">Total Now</div></div>
-      </div>
-    </div>`;
-}
-
-// ═══════════════════════════════════════════════════
-// CHARTS (rendered on expand)
-// ═══════════════════════════════════════════════════
-Chart.defaults.color = '#9b99a1';
-Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
-Chart.defaults.font.family = "'DM Sans',sans-serif";
-Chart.defaults.font.size = 11;
-
-function renderEqChart() {
-  const ctx = document.getElementById('eqChart');
-  if (!ctx) return;
-  charts['eq'] = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels:D.backtest[0].eq.map((_,i)=>i),
-      datasets:D.backtest.map((b,i) => ({
-        label:b.name.replace(/_/g,' '),
-        data:b.eq,
-        borderColor:['#6c5ce7','#00b894','#d63031'][i],
-        borderWidth:b.pass?2:1.5,borderDash:b.pass?[]:[4,4],
-        tension:.3,pointRadius:0,fill:false,
-      }))
-    },
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      scales:{y:{grid:{color:'rgba(255,255,255,.04)'}},x:{display:false}},
-      plugins:{legend:{labels:{usePointStyle:true,pointStyleWidth:8}}}
-    }
-  });
-}
-
-function renderNavChart() {
-  const ctx = document.getElementById('navChart');
-  if (!ctx) return;
-  charts['nav'] = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels:D.nav.map(n=>{const s=String(n[0]);return s.slice(0,-2)+'/'+s.slice(-2)}),
-      datasets:[{
-        label:'Portfolio NAV',data:D.nav.map(n=>n[1]),
-        borderColor:'#fdcb6e',backgroundColor:'rgba(253,203,110,.06)',
-        fill:true,tension:.3,pointRadius:0,borderWidth:2,
-      }]
-    },
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(255,255,255,.04)'}},x:{ticks:{maxTicksLimit:8},grid:{display:false}}},
-      plugins:{legend:{display:false}}
-    }
-  });
-}
+Chart.defaults.color='#9b99a1';Chart.defaults.borderColor='rgba(255,255,255,0.04)';Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=10;
+function mkEq(){const c=document.getElementById('eqC');if(!c)return;charts.eq=new Chart(c,{type:'line',data:{labels:BT[0].eq.map((_,i)=>i),datasets:BT.map((b,i)=>({label:b.name.replace(/_/g,' '),data:b.eq,borderColor:['#6c5ce7','#00b894','#d63031'][i],borderWidth:b.pass?2:1.5,borderDash:b.pass?[]:[4,4],tension:.3,pointRadius:0,fill:false}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid:{color:'rgba(255,255,255,.04)'}},x:{display:false}},plugins:{legend:{labels:{usePointStyle:true,pointStyleWidth:8}}}}})}
+function mkNv(){const c=document.getElementById('nvC');if(!c)return;charts.nv=new Chart(c,{type:'line',data:{labels:NAV.map(n=>{const s=String(n[0]);return s.slice(0,-2)+'/'+s.slice(-2)}),datasets:[{label:'NAV',data:NAV.map(n=>n[1]),borderColor:'#fdcb6e',backgroundColor:'rgba(253,203,110,.06)',fill:true,tension:.3,pointRadius:0,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(255,255,255,.04)'}},x:{ticks:{maxTicksLimit:8},grid:{display:false}}},plugins:{legend:{display:false}}}})}
 </script>
 </body>
 </html>

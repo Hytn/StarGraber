@@ -96,32 +96,9 @@ def compute_factor(prices: pd.DataFrame, volumes: pd.DataFrame) -> pd.DataFrame:
 '''
 
     def _generate_with_llm(self, idea, llm_client, code_library) -> str:
-        library_context = ""
-        if code_library:
-            library_context = (
-                "\nExisting verified factor code for reference:\n"
-                + "\n---\n".join(
-                    v.get("code", "") for v in code_library.values()
-                )[:2000]
-            )
-
-        prompt = (
-            "You are a quant developer. Write a Python function that computes "
-            "the following factor.\n\n"
-            f"Factor name: {idea.get('name')}\n"
-            f"Description: {idea.get('description')}\n"
-            f"Formula: {idea.get('factor_formula')}\n\n"
-            "Requirements:\n"
-            "- Function signature: def compute_factor(prices: pd.DataFrame, "
-            "volumes: pd.DataFrame) -> pd.DataFrame\n"
-            "- prices and volumes have DatetimeIndex (rows) and ticker columns\n"
-            "- Return a DataFrame of factor values, same shape\n"
-            "- Use ONLY current and past data. NO future data (look-ahead bias)\n"
-            "- Handle NaN values gracefully\n"
-            f"{library_context}\n\n"
-            "Return ONLY the Python function code, no explanation."
-        )
-        return llm_client.generate(prompt)
+        from .llm_client import CodeGeneratorLLM
+        generator = CodeGeneratorLLM(llm_client)
+        return generator.generate_code(idea, code_library)
 
 
 class FactorValidator:
